@@ -1,1 +1,0 @@
-pred succ (if true then 0 else false)
