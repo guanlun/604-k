@@ -4,7 +4,6 @@ require "substitution.k"
 
 module LAMBDA
   imports SUBSTITUTION
-
   syntax Val ::= Id
                | "lambda" Id "." Exp  [binder, latex(\lambda{#1}.{#2})]
   syntax Exp ::= Val
@@ -32,15 +31,13 @@ module LAMBDA
   syntax Exp ::= "let" Id "=" Exp "in" Exp
   rule let X = E in E':Exp => (lambda X . E') E                        [macro]
 
-  syntax Id ::= "$f" | "$x" | "$y"
-  rule mu X:Id . E:Exp =>
-    (lambda $f . (
-      (lambda $x . ($f (lambda $y . ($x $x $y))))
-      (lambda $x . ($f (lambda $y . ($x $x $y))))
-    )) (lambda X . E)
-
   syntax Exp ::= "letrec" Id Id "=" Exp "in" Exp
-               | "mu" Id "." Exp      [binder, latex(\mu{#1}.{#2})]
-
+               | "mu" Id "." Exp                 [binder, latex(\mu{#1}.{#2})]
   rule letrec F:Id X = E in E' => let F = mu F . lambda X . E in E'    [macro]
+  rule mu X . E => E[(mu X . E) / X]
+
+  syntax Exp ::= "callcc" Exp  [strict]
+  syntax Val ::= cc(K)
+  rule <k> (callcc V:Val => V cc(K)) ~> K </k>
+  rule <k> cc(K) V ~> _ =>  V ~> K </k>
 endmodule
