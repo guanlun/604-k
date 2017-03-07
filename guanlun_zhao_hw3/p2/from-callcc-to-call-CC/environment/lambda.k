@@ -65,6 +65,7 @@ module LAMBDA
 
   rule <k> (callcc V:Val => V cc(Rho,K)) ~> K </k> <env> Rho </env>
   rule <k> cc(Rho,K) V:Val ~> _ =>  V ~> K </k> <env> _ => Rho </env>
+  rule <k> V:Val cc(Rho,K) ~> _ =>  V ~> K </k> <env> _ => Rho </env>
 
   rule <k> (callCC V:Val) ~> K => V CC(Rho,K) </k> <env> Rho </env>
   rule <k> CC(Rho,K) V:Val ~> _ => callcc V ~> K </k> <env> _ => Rho </env>

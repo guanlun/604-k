@@ -44,6 +44,7 @@ module LAMBDA
 
   rule <k> (callcc V:Val => V cc(K)) ~> K </k>
   rule <k> cc(K) V:Val ~> _ => V ~> K </k>
+  rule <k> V:Val cc(K) ~> _ => V ~> K </k>
 
   rule <k> (callCC V:Val) ~> K => V CC(K) </k>
   rule <k> CC(K) V:Val ~> _ => callcc V ~> K </k>
