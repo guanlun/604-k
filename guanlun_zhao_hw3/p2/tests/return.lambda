@@ -1,0 +1,4 @@
+letrec f x = callcc (lambda return .
+  (if (x <= 0) then ((return 1) / 0) else 2)
+  )
+in let a = f 3 in 10
