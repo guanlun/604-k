@@ -57,16 +57,15 @@ module LAMBDA
   rule <k> muclosure(Rho,E) => E ~> Rho' ...</k>
        <env> Rho' => Rho </env>
 
-  syntax Exp ::= "callCC" Exp [strict]
   syntax Exp ::= "callcc" Exp [strict]
+  syntax Exp ::= "callCC" Exp [strict]
 
-  syntax Val ::= CC(Map,K)
   syntax Val ::= cc(Map,K)
-
-  rule <k> (callCC V:Val) ~> K => V CC(Rho,K) </k> <env> Rho </env>
-  rule <k> CC(Rho,K) V:Val ~> _ =>  V ~> K </k> <env> _ => Rho </env>
-  rule <k> V CC(Rho,K) ~> _ => V ~> K </k> <env> _ => Rho </env>
+  syntax Val ::= CC(Map,K)
 
   rule <k> (callcc V:Val => V cc(Rho,K)) ~> K </k> <env> Rho </env>
-  rule <k> cc(Rho,K) V ~> _ => callCC V ~> K </k>
+  rule <k> cc(Rho,K) V:Val ~> _ =>  V ~> K </k> <env> _ => Rho </env>
+
+  rule <k> (callCC V:Val) ~> K => V CC(Rho,K) </k> <env> Rho </env>
+  rule <k> CC(Rho,K) V:Val ~> _ => callcc V ~> K </k> <env> _ => Rho </env>
 endmodule

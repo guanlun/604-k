@@ -36,8 +36,8 @@ module LAMBDA
   rule letrec F:Id X = E in E' => let F = mu F . lambda X . E in E'    [macro]
   rule mu X . E => E[(mu X . E) / X]
 
-  syntax Exp ::= "callCC" Exp  [strict]
+  syntax Exp ::= "callCC" Exp [strict]
   syntax Val ::= CC(K)
   rule <k> (callCC V:Val) ~> K => V CC(K) </k>
-  rule <k> CC(K) V ~> _ => V ~> K </k>
+  rule <k> CC(K) V:Val ~> _ => V ~> K </k>
 endmodule

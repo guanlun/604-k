@@ -57,7 +57,7 @@ module LAMBDA
   rule <k> muclosure(Rho,E) => E ~> Rho' ...</k>
        <env> Rho' => Rho </env>
 
-  syntax Exp ::= "callCC" Exp  [strict]
+  syntax Exp ::= "callCC" Exp [strict]
   syntax Val ::= CC(Map,K)
   rule <k> (callCC V:Val) ~> K => V CC(Rho,K) </k> <env> Rho </env>
   rule <k> CC(Rho,K) V:Val ~> _ =>  V ~> K </k> <env> _ => Rho </env>

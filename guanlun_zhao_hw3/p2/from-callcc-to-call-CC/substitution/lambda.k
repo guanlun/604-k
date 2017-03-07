@@ -43,9 +43,8 @@ module LAMBDA
   syntax Val ::= CC(K)
 
   rule <k> (callcc V:Val => V cc(K)) ~> K </k>
-  rule <k> cc(K) V ~> _ => V ~> K </k>
-  rule <k> V cc(K) ~> _ => V ~> K </k>
+  rule <k> cc(K) V:Val ~> _ => V ~> K </k>
 
-  rule <k> (callCC V:Val => V CC(K)) ~> (K => .) </k>
-  rule <k> CC(K) Exp ~> _ => (callcc Exp ~> K) </k>
+  rule <k> (callCC V:Val) ~> K => V CC(K) </k>
+  rule <k> CC(K) V:Val ~> _ => callcc V ~> K </k>
 endmodule
