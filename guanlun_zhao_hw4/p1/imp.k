@@ -64,10 +64,10 @@ module IMP
   rule <k> {S} => S ~> Rho ~> CurrScope ...</k> 
        <env> Rho </env>
        <scope> CurrScope => .Map </scope> [structural]
-  rule <k> Rho => . ...</k> <env> _ => Rho </env> [structural]
-  rule <k> OrigScope => . ...</k> <scope> _ => OrigScope </scope> [structural]
+  rule <k> (Rho ~> OrigScope) => . ...</k>
+       <env> _ => Rho </env>
+       <scope> _ => OrigScope </scope> [structural]
 // Stmt
-  
   rule <k> X = I:Int; => . ...</k>
        <env>... X |-> N ...</env>
        <store>... N |-> (_ => I) ...</store>
