@@ -61,9 +61,11 @@ module IMP
   rule false && _ => false
 // Block
   rule {} => .   [structural]
-  rule <k> {S} => S ~> Rho ~> SRho ...</k> <env> Rho </env> <scope> SRho => .Map </scope> [structural]
+  rule <k> {S} => S ~> Rho ~> CurrScope ...</k> 
+       <env> Rho </env>
+       <scope> CurrScope => .Map </scope> [structural]
   rule <k> Rho => . ...</k> <env> _ => Rho </env> [structural]
-  rule <k> SRho => . ...</k> <scope> _ => SRho </scope> [structural]
+  rule <k> OrigScope => . ...</k> <scope> _ => OrigScope </scope> [structural]
 // Stmt
   
   rule <k> X = I:Int; => . ...</k>
@@ -75,10 +77,18 @@ module IMP
   rule if (false) _ else S => S
   rule while (B) S => if (B) {S while (B) S} else {}  [structural]
 
-  rule <k> int (X,Xs => Xs); ...</k>
+  rule <k> (
+          int X,Xs; =>
+          if (X in keys(CurrScope)) {
+            print("Error: variable " + Id2String(X) + " already declared in this block.\n");
+            halt;
+          } else {}
+          int Xs;
+       ) ... </k>
        <env> Rho => Rho[X <- !N:Int] </env>
-       <scope>... .Map => X |-> 1 ...</scope>
+       <scope> CurrScope => CurrScope[X <- 1] </scope>
        <store>... .Map => !N |-> 0 ...</store>
+
   rule int .Ids; => .  [structural]
 
   syntax Printable ::= Int | String
