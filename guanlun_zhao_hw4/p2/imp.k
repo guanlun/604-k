@@ -1,31 +1,33 @@
 // Copyright (c) 2014-2016 K Team. All Rights Reserved.
+
 module IMP-SYNTAX
   syntax AExp  ::= Int | String | Id
                  | "++" Id
                  | "read" "(" ")"
                  > AExp "/" AExp              [left, strict, division]
                  > AExp "+" AExp              [left, strict]
+                 > "spawn" Block
+                 > Id "=" AExp                [strict(2)]
                  | "(" AExp ")"               [bracket]
   syntax BExp  ::= Bool
                  | AExp "<=" AExp             [seqstrict, latex({#1}\leq{#2})]
                  | "!" BExp                   [strict]
                  > BExp "&&" BExp             [left, strict(1)]
                  | "(" BExp ")"               [bracket]
-  syntax Block ::= "{" "}"
-                 | "{" Stmt "}"
+  syntax Block ::= "{" Stmts "}"
   syntax Stmt  ::= Block
-                 | Id "=" AExp ";"            [strict(2)]
+                 | AExp ";"                   [strict]
                  | "if" "(" BExp ")"
                    Block "else" Block         [strict(1)]
                  | "while" "(" BExp ")" Block
                  | "int" Ids ";"
                  | "print" "(" AExps ")" ";"
                  | "halt" ";"
-                 > "spawn" Stmt
-                 > Stmt Stmt                  [left]
+                 > "join" AExp ";"            [strict]
 
   syntax Ids   ::= List{Id,","}
   syntax AExps ::= List{AExp,","}
+  syntax Stmts ::= List{Stmt,""}
 endmodule
 
 
@@ -34,9 +36,13 @@ module IMP
   syntax KResult ::= Int | Bool | String
 
   configuration <T color="yellow">
-                  <k color="green"> $PGM:Stmt </k>
-                  <env color="LightSkyBlue"> .Map </env>
-                  <scope color="orange"> .Map </scope>
+                  <threads color="orange">
+                    <thread multiplicity="*" color="blue">
+                      <k color="green"> $PGM:Stmts </k>
+                      <env color="LightSkyBlue"> .Map </env>
+                      <id color="black"> 0 </id>
+                    </thread>
+                  </threads>
                   <store color="red"> .Map </store>
                   <in color="magenta" stream="stdin"> .List </in>
                   <out color="Orchid" stream="stdout"> .List </out>
@@ -50,8 +56,8 @@ module IMP
        <env>... X |-> N ...</env>
        <store>... N |-> (I => I +Int 1) ...</store>  [increment]
   rule <k> read() => I ...</k>
-       <in> ListItem(I:Int) => .List ...</in>
-  rule I1 / I2 => I1 /Int I2  when I2 =/=Int 0
+       <in> ListItem(I:Int) => .List ...</in>  [read]
+  rule I1 / I2 => I1 /Int I2  requires I2 =/=Int 0
   rule I1 + I2 => I1 +Int I2
   rule Str1 + Str2 => Str1 +String Str2
 // BExp
@@ -60,24 +66,19 @@ module IMP
   rule true && B => B
   rule false && _ => false
 // Block
-  rule {} => .   [structural]
-  rule <k> {S} => S ~> Rho ~> SRho ...</k> <env> Rho </env> <scope> SRho => .Map </scope> [structural]
-  rule <k> Rho => . ...</k> <env> _ => Rho </env> [structural]
-  rule <k> SRho => . ...</k> <scope> _ => SRho </scope> [structural]
+  rule <k> {Ss} => Ss ~> Rho ...</k> <env> Rho </env>  [structural]
+  rule <k> Rho => . ...</k> <env> _ => Rho </env>    [structural]
 // Stmt
-  
-  rule <k> X = I:Int; => . ...</k>
+  rule _:Int; => .
+  rule <k> X = I:Int => I ...</k>
        <env>... X |-> N ...</env>
-       <store>... N |-> (_ => I) ...</store>
-       <scope>... X |-> 1 ...</scope>
-  rule S1:Stmt S2:Stmt => S1 ~> S2  [structural]
+       <store>... N |-> (_ => I) ...</store>  [assignment]
   rule if (true)  S else _ => S
   rule if (false) _ else S => S
-  rule while (B) S => if (B) {S while (B) S} else {}  [structural]
+  rule while (B) S => if (B) {S while (B) S} else {.Stmts}  [structural]
 
   rule <k> int (X,Xs => Xs); ...</k>
        <env> Rho => Rho[X <- !N:Int] </env>
-       <scope>... .Map => X |-> 1 ...</scope>
        <store>... .Map => !N |-> 0 ...</store>
   rule int .Ids; => .  [structural]
 
@@ -87,8 +88,21 @@ module IMP
   syntax AExp ::= Printable
   context print(HOLE:AExp, AEs:AExps);
   rule <k> print(P:Printable,AEs => AEs); ...</k>
-       <out>... .List => ListItem(P) </out>
+       <out>... .List => ListItem(P) </out>  [print]
   rule print(.AExps); => .  [structural]
 
   rule <k> halt; ~> _ => . </k>
+
+  rule <k> spawn S => !T:Int ...</k> <env> Rho </env>
+       (.Bag => <thread>... <k> S </k> <env> Rho </env> <id> !T </id> ...</thread>)
+  rule <k> join(T:Int); => . ...</k>
+       <thread>... <k> . </k> <id> T </id> ...</thread>
+
+// Stmts
+  rule .Stmts => .                 [structural]
+  rule S:Stmt Ss:Stmts => S ~> Ss  [structural]
+
+// verification ids
+  syntax Id ::= "n"     [token]
+              | "sum"   [token]
 endmodule
