@@ -6,7 +6,7 @@ module IMP-SYNTAX
                  | "read" "(" ")"
                  > AExp "/" AExp              [left, strict, division]
                  > AExp "+" AExp              [left, strict]
-                 > "spawn" Block
+                 > "spawn" Block              [transition]
                  > Id "=" AExp                [strict(2)]
                  | "(" AExp ")"               [bracket]
   syntax BExp  ::= Bool
@@ -97,10 +97,10 @@ module IMP
   rule print(.AExps); => .  [structural]
 
   rule <k> halt; ~> _ => . </k>
-  rule <k> abort; ~> _ => . </k> <store>... .Map => "Aborted" |-> true ...</store>
+  rule <k> abort; ~> _ => . </k> <store>... .Map => "Aborted" |-> true ...</store> [abort]
 
   rule <k> spawn S => !T:Int ...</k> <env> Rho </env>
-       (.Bag => <thread>... <k> S </k> <env> Rho </env> <id> !T </id> ...</thread>)
+       (.Bag => <thread>... <k> S </k> <env> Rho </env> <id> !T </id> ...</thread>) [transition]
   rule <k> join(T:Int); => . ...</k>
        <thread>... <k> . </k> <id> T </id> ...</thread>
 
