@@ -71,7 +71,6 @@ module IMP
   rule <k> X = I:Int; => . ...</k>
        <env>... X |-> N ...</env>
        <store>... N |-> (_ => I) ...</store>
-       <scope>... X |-> 1 ...</scope>
   rule S1:Stmt S2:Stmt => S1 ~> S2  [structural]
   rule if (true)  S else _ => S
   rule if (false) _ else S => S

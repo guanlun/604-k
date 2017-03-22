@@ -4,8 +4,8 @@ module IMP-SYNTAX
   syntax AExp  ::= Int | String | Id
                  | "++" Id
                  | "read" "(" ")"
-                 > AExp "/" AExp              [left, strict, division]
-                 > AExp "+" AExp              [left, strict]
+                 > AExp "/" AExp              [left, strict, division, transition]
+                 > AExp "+" AExp              [left, strict, transition]
                  > "spawn" Block
                  > Id "=" AExp                [strict(2)]
                  | "(" AExp ")"               [bracket]
@@ -26,7 +26,7 @@ module IMP-SYNTAX
                  > "join" AExp ";"            [strict]
 
   syntax Ids   ::= List{Id,","}
-  syntax AExps ::= List{AExp,","}
+  syntax AExps ::= List{AExp,","}  [strict]
   syntax Stmts ::= List{Stmt,""}
 endmodule
 
@@ -51,12 +51,12 @@ module IMP
 // AExp
   rule <k> X:Id => I ...</k>
        <env>... X |-> N ...</env>
-       <store>... N |-> I ...</store>  [lookup]
+       <store>... N |-> I ...</store>  [lookup, transition]
   rule <k> ++X => I +Int 1 ...</k>
        <env>... X |-> N ...</env>
-       <store>... N |-> (I => I +Int 1) ...</store>  [increment]
+       <store>... N |-> (I => I +Int 1) ...</store>  [increment, transition]
   rule <k> read() => I ...</k>
-       <in> ListItem(I:Int) => .List ...</in>  [read]
+       <in> ListItem(I:Int) => .List ...</in>  [read, transition]
   rule I1 / I2 => I1 /Int I2  requires I2 =/=Int 0
   rule I1 + I2 => I1 +Int I2
   rule Str1 + Str2 => Str1 +String Str2
@@ -85,11 +85,9 @@ module IMP
   syntax Printable ::= Int | String
 /* currently it is necessary to subsort Printable to AExp,
   but future K should be able to infer that automatically. */
-  syntax AExp ::= Printable
-  context print(HOLE:AExp, AEs:AExps);
-  rule <k> print(P:Printable,AEs => AEs); ...</k>
-       <out>... .List => ListItem(P) </out>  [print]
-  rule print(.AExps); => .  [structural]
+  syntax AExp ::= Printable [transition]
+  context print(HOLE:AExp, AEs:AExps); [transition]
+  rule print(AExps); => .  [structural, transition]
 
   rule <k> halt; ~> _ => . </k>
 
