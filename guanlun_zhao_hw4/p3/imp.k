@@ -49,6 +49,10 @@ module IMP
                   <out color="Orchid" stream="stdout"> .List </out>
                 </T>
 
+  rule <k> S:Stmt ~> _ => . </k>
+  <store> Rho </store>
+  requires ("Aborted" in keys(Rho))
+
 // AExp
   rule <k> X:Id => I ...</k>
        <env>... X |-> N ...</env>
@@ -92,13 +96,14 @@ module IMP
        <out>... .List => ListItem(P) </out>  [print]
   rule print(.AExps); => .  [structural]
 
-  rule <k> halt; ~> _ => . </k> 
+  rule <k> halt; ~> _ => . </k>
+  rule <k> abort; ~> _ => . </k> <store>... .Map => "Aborted" |-> true ...</store>
 
   rule <k> spawn S => !T:Int ...</k> <env> Rho </env>
        (.Bag => <thread>... <k> S </k> <env> Rho </env> <id> !T </id> ...</thread>)
-
   rule <k> join(T:Int); => . ...</k>
        <thread>... <k> . </k> <id> T </id> ...</thread>
+
 // Stmts
   rule .Stmts => .                 [structural]
   rule S:Stmt Ss:Stmts => S ~> Ss  [structural]

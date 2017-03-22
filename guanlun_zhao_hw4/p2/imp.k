@@ -86,8 +86,9 @@ module IMP
 /* currently it is necessary to subsort Printable to AExp,
   but future K should be able to infer that automatically. */
   syntax AExp ::= Printable [transition]
-  context print(HOLE:AExp, AEs:AExps); [transition]
-  rule print(AExps); => .  [structural, transition]
+  rule <k> print(P:Printable,AEs => AEs); ...</k>
+       <out>... .List => ListItem(P) </out> [strict(1)]
+  rule print(AExps); => .  [strict(1), structural, transition]
 
   rule <k> halt; ~> _ => . </k>
 
