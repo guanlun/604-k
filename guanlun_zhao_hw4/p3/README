@@ -1,0 +1,3 @@
+Please use the following command to kompile imp.k:
+
+kompile --transition "print assignment lookup increment division spawn abort halt" imp.k
