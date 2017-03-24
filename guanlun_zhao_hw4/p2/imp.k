@@ -3,10 +3,10 @@
 module IMP-SYNTAX
   syntax AExp  ::= Int | String | Id
                  | "++" Id
-                 | "read" "(" ")"
-                 > AExp "/" AExp              [left, strict, division, transition]
-                 > AExp "+" AExp              [left, strict, transition]
-                 > "spawn" Block
+                 | "read" "(" ")"             
+                 > AExp "/" AExp              [transition, left, strict, division]
+                 > AExp "+" AExp              [transition, left, strict]
+                 > "spawn" Block              //[transition]
                  > Id "=" AExp                [strict(2)]
                  | "(" AExp ")"               [bracket]
   syntax BExp  ::= Bool
@@ -26,7 +26,7 @@ module IMP-SYNTAX
                  > "join" AExp ";"            [strict]
 
   syntax Ids   ::= List{Id,","}
-  syntax AExps ::= List{AExp,","}  [strict]
+  syntax AExps ::= List{AExp,","}
   syntax Stmts ::= List{Stmt,""}
 endmodule
 
@@ -51,12 +51,12 @@ module IMP
 // AExp
   rule <k> X:Id => I ...</k>
        <env>... X |-> N ...</env>
-       <store>... N |-> I ...</store>  [lookup, transition]
+       <store>... N |-> I ...</store>  [lookup]  //[transition] //[lookup,tansition]
   rule <k> ++X => I +Int 1 ...</k>
        <env>... X |-> N ...</env>
-       <store>... N |-> (I => I +Int 1) ...</store>  [increment, transition]
+       <store>... N |-> (I => I +Int 1) ...</store>  [increment]  //[transition]  //[increment,transition]
   rule <k> read() => I ...</k>
-       <in> ListItem(I:Int) => .List ...</in>  [read, transition]
+       <in> ListItem(I:Int) => .List ...</in>  [read] //[read,tansition]
   rule I1 / I2 => I1 /Int I2  requires I2 =/=Int 0
   rule I1 + I2 => I1 +Int I2
   rule Str1 + Str2 => Str1 +String Str2
@@ -82,13 +82,14 @@ module IMP
        <store>... .Map => !N |-> 0 ...</store>
   rule int .Ids; => .  [structural]
 
-  syntax Printable ::= Int | String
+  syntax Printable ::= Int | String   [transition]
 /* currently it is necessary to subsort Printable to AExp,
   but future K should be able to infer that automatically. */
-  syntax AExp ::= Printable [transition]
-  rule <k> print(P:Printable,AEs => AEs); ...</k>
-       <out>... .List => ListItem(P) </out> [strict(1)]
-  rule print(AExps); => .  [strict(1), structural, transition]
+  syntax AExp ::= Printable
+  context print(HOLE:AExp, AEs:AExps);
+  rule <k> print(P:Printable,AEs => AEs); ...</k>  
+       <out>... .List => ListItem(P) </out> [transition]
+  rule print(.AExps); => .
 
   rule <k> halt; ~> _ => . </k>
 
