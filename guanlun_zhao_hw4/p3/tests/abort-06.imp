@@ -3,6 +3,6 @@
 // only the first message is guaranteed to printed, and the number of possible
 // messsage orders becomes 11.
 
-spawn { print("Hi from thread 1!\n"); halt; };
+spawn { print("Hi from thread 1!\n"); abort; };
 spawn { print("Hi from thread 2!\n"); halt; };
 spawn { print("Hi from thread 3!\n"); halt; };

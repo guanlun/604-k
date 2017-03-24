@@ -1,3 +1,5 @@
 Please use the following command to kompile imp.k:
 
 kompile --transition "transition" imp.k
+
+Please find the imp program that produces the desired result for nondet-my.imp.out in nondet-my.imp.

@@ -1,3 +1,11 @@
 Please use the following command to kompile imp.k:
 
 kompile --transition "print assignment lookup increment division spawn abort halt" imp.k
+
+I've added my test case halt-vs-abort.imp in this directory.
+
+My solution does not match the output of abort-04.imp and abort-09.imp. However I think the sample output might be incorrect.
+
+For example, in abort-09, the sample output is only "". However, it is possible for the first print to be executed before "abort", leading to 2 possible results.
+
+The same goes for abort-04.

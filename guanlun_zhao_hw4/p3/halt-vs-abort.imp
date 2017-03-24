@@ -1,0 +1,8 @@
+int t1;
+t1 = spawn {
+    print("In thread 1.\n");
+    halt; // replace "abort" with "halt" to get different results.
+};
+
+join(t1);
+print("In main thread: Should be printed out with halt but not abort.\n");

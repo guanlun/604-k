@@ -1,0 +1,11 @@
+int x;
+x = 1;
+
+spawn { ++x; };
+spawn { ++x; };
+spawn { ++x; };
+spawn { ++x; };
+spawn { ++x; };
+spawn { ++x; };
+
+print(x);

@@ -36,7 +36,7 @@ module IMP
   configuration <T color="yellow">
                   <k color="green"> $PGM:Stmt </k>
                   <env color="LightSkyBlue"> .Map </env>
-                  <scope color="orange"> .Map </scope>
+                  <declaredvar color="blue"> .Map </declaredvar>
                   <store color="red"> .Map </store>
                   <in color="magenta" stream="stdin"> .List </in>
                   <out color="Orchid" stream="stdout"> .List </out>
@@ -61,12 +61,14 @@ module IMP
   rule false && _ => false
 // Block
   rule {} => .   [structural]
-  rule <k> {S} => S ~> Rho ~> CurrScope ...</k> 
-       <env> Rho </env>
-       <scope> CurrScope => .Map </scope> [structural]
-  rule <k> (Rho ~> OrigScope) => . ...</k>
-       <env> _ => Rho </env>
-       <scope> _ => OrigScope </scope> [structural]
+  rule <k> {S} => S ~> (Scope ~> Rho) ...</k>
+       <declaredvar> Scope => .Map </declaredvar>
+       <env> Rho </env> [structural]
+
+  // Restore original scope and env when exiting from block
+  rule <k> (OrigScope ~> Rho) => . ...</k>
+       <declaredvar> _ => OrigScope </declaredvar> 
+       <env> _ => Rho </env> [structural]
 // Stmt
   rule <k> X = I:Int; => . ...</k>
        <env>... X |-> N ...</env>
@@ -78,14 +80,18 @@ module IMP
 
   rule <k> (
           int X,Xs; =>
-          if (X in keys(CurrScope)) {
-            print("Error: variable " + Id2String(X) + " already declared in this block.\n");
+          if (X in keys(Scope)) {
+            print("Error: variable " +String Id2String(X) +String " already declared in this block.\n");
             halt;
-          } else {}
+          } else {
+            // do nothing
+          }
+
+          // Continue declaration
           int Xs;
-       ) ... </k>
+       ) ...</k>
        <env> Rho => Rho[X <- !N:Int] </env>
-       <scope> CurrScope => CurrScope[X <- 1] </scope>
+       <declaredvar> Scope => Scope[X <- 1] </declaredvar>
        <store>... .Map => !N |-> 0 ...</store>
 
   rule int .Ids; => .  [structural]
