@@ -26,8 +26,8 @@ module IMP-SYNTAX
                  | "print" "(" AExps ")" ";"
                  | "halt" ";"
                  > "join" AExp ";"            [strict]
-                 | "wait" AExp ";"      [strict]
-                 > "break-atomic" ";"
+                 | "hold" ";"      [strict]
+                 > "exit-atomic" ";"
                  > "continue" ";"
 
   syntax Ids   ::= List{Id,","}
@@ -49,19 +49,19 @@ module IMP
                     </thread>
                   </threads>
                   <store color="red"> .Map </store>
-                  <jiang> .Map[0 <- true] </jiang>
+                  <jiang> .Map[0 <- -1] </jiang>
                   <in color="magenta" stream="stdin"> .List </in>
                   <out color="Orchid" stream="stdout"> .List </out>
                 </T>
 // Atomic rules
   rule <thread>...
-        <k> S:Stmt ~> Ss:Stmts => wait A; ~> S ~> Ss ...</k>
+        <k> S => hold; ~> S ...</k>
         <id> T </id>
         ...
        </thread>
        <store>... "Atomic" |-> A ...</store>
-       <jiang>... T |-> (J => false) ...</jiang>
-       requires (A =/=Int T) andBool J
+       <jiang>... T |-> (J => A) ...</jiang>
+       requires (A =/=Int T) andBool (J =/=Int A) andBool (A =/=Int -1)
        
 // AExp
   rule <k> X:Id => I ...</k>
@@ -106,7 +106,14 @@ module IMP
        <out>... .List => ListItem(P) </out>  [print]
   rule print(.AExps); => .  [structural]
 
-  rule <k> halt; ~> _ => . </k>
+  rule <thread>...
+        <k> hold; => . ...</k>
+        <id> T </id>
+        ...
+       </thread>
+       <store>... "Atomic" |-> A ...</store>
+       <jiang>... T |-> J ...</jiang>
+       requires (J =/=Int A)
 
   rule <k> spawn S => !T:Int ...</k>
        <env> Rho </env>
@@ -114,15 +121,14 @@ module IMP
        (.Bag => <thread>... <k> S </k> <env> Rho </env> <id> !T </id> ...</thread>) [spawn]
   rule <k> join(T:Int); => . ...</k>
        <thread>... <k> . </k> <id> T </id> ...</thread>
-  rule <k> wait(T:Int); => . ...</k>
-       <thread>... <k> . </k> <id> T </id> ...</thread>
 
   rule <k> atomic S => !T:Int ...</k>
        <env> Rho </env>
        <store>... .Map => "Atomic" |-> !T ...</store>
-       (.Bag => <thread>... <k> S ~> break-atomic; </k> <env> Rho </env> <id> !T </id> ...</thread>)
+       (.Bag => <thread>... <k> S ~> exit-atomic; </k> <env> Rho </env> <id> !T </id> ...</thread>)
 
-  rule <k> break-atomic; => . ...</k>
+  rule <k> exit-atomic; => . ...</k>
+       <store>... "Atomic" |-> (_ => -1) ...</store>
 
 // Stmts
   rule .Stmts => .                 [structural]
