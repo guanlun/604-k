@@ -27,6 +27,7 @@ module IMP-SYNTAX
                  | "halt" ";"
                  > "join" AExp ";"            [strict]
                  | "hold" ";"      [strict]
+                 > "break-atomic" ";"
                  > "exit-atomic" ";"
                  > "continue" ";"
 
@@ -48,7 +49,7 @@ module IMP
                       <id color="black"> 0 </id>
                     </thread>
                   </threads>
-                  <store color="red"> .Map </store>
+                  <store color="red"> .Map["Atomic" <- -1] </store>
                   <jiang> .Map[0 <- -1] </jiang>
                   <in color="magenta" stream="stdin"> .List </in>
                   <out color="Orchid" stream="stdout"> .List </out>
@@ -117,14 +118,15 @@ module IMP
 
   rule <k> spawn S => !T:Int ...</k>
        <env> Rho </env>
-       <jiang>... .Map => !T |-> true ...</jiang>
+       <jiang>... .Map => !T |-> -1 ...</jiang>
        (.Bag => <thread>... <k> S </k> <env> Rho </env> <id> !T </id> ...</thread>) [spawn]
   rule <k> join(T:Int); => . ...</k>
        <thread>... <k> . </k> <id> T </id> ...</thread>
 
   rule <k> atomic S => !T:Int ...</k>
        <env> Rho </env>
-       <store>... .Map => "Atomic" |-> !T ...</store>
+       <store> Store => Store["Atomic" <- !T] </store>
+       <jiang>... .Map => "Old" |-> Store ...</jiang>
        (.Bag => <thread>... <k> S ~> exit-atomic; </k> <env> Rho </env> <id> !T </id> ...</thread>)
 
   rule <k> exit-atomic; => . ...</k>

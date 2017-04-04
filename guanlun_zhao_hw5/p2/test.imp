@@ -1,3 +1,3 @@
-int x, t;
+int x;
 atomic {x = 1; x = 2;};
 print(x);
