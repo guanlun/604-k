@@ -48,31 +48,19 @@ module IMP
                     </thread>
                   </threads>
                   <store color="red"> .Map </store>
-                  <jiang> .Map => 1 |-> 1 </jiang>
+                  <jiang> .Map[0 <- 1] </jiang>
                   <in color="magenta" stream="stdin"> .List </in>
                   <out color="Orchid" stream="stdout"> .List </out>
                 </T>
 // Atomic rules
   rule <thread>...
-        <k> Ss:Stmts => join(A); ~> Ss ...</k>
+        <k> S:Stmt ~> Ss:Stmts => join(A); ~> S ~> Ss ...</k>
         <id> T </id>
         ...
        </thread>
        <store>... "Atomic" |-> A ...</store>
-       requires (A =/=Int T)
-
-/*
-  rule <k> S:ES => (
-       if ((A =/=Int T) andBool true) {
-         join(A);
-       } else {
-         continue;
-       }
-       ~> S:ES
-       ) ...</k>
-       <store>... "Atomic" |-> A "SB" + T |-> S ...</store>
-       <id> T </id>
-       */
+       <jiang>... T |-> (J => 0) ...</jiang>
+       requires (A =/=Int T) andBool (J ==Int 1)
        
 // AExp
   rule <k> X:Id => I ...</k>
