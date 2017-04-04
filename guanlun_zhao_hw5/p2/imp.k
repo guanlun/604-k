@@ -26,6 +26,7 @@ module IMP-SYNTAX
                  | "print" "(" AExps ")" ";"
                  | "halt" ";"
                  > "join" AExp ";"            [strict]
+                 | "wait" AExp ";"      [strict]
                  > "break-atomic" ";"
                  > "continue" ";"
 
@@ -48,19 +49,19 @@ module IMP
                     </thread>
                   </threads>
                   <store color="red"> .Map </store>
-                  <jiang> .Map[0 <- 1] </jiang>
+                  <jiang> .Map[0 <- true] </jiang>
                   <in color="magenta" stream="stdin"> .List </in>
                   <out color="Orchid" stream="stdout"> .List </out>
                 </T>
 // Atomic rules
   rule <thread>...
-        <k> S:Stmt ~> Ss:Stmts => join(A); ~> S ~> Ss ...</k>
+        <k> S:Stmt ~> Ss:Stmts => wait A; ~> S ~> Ss ...</k>
         <id> T </id>
         ...
        </thread>
        <store>... "Atomic" |-> A ...</store>
-       <jiang>... T |-> (J => 0) ...</jiang>
-       requires (A =/=Int T) andBool (J ==Int 1)
+       <jiang>... T |-> (J => false) ...</jiang>
+       requires (A =/=Int T) andBool J
        
 // AExp
   rule <k> X:Id => I ...</k>
@@ -109,9 +110,11 @@ module IMP
 
   rule <k> spawn S => !T:Int ...</k>
        <env> Rho </env>
-       <jiang>... .Map => !T |-> 1 ...</jiang>
+       <jiang>... .Map => !T |-> true ...</jiang>
        (.Bag => <thread>... <k> S </k> <env> Rho </env> <id> !T </id> ...</thread>) [spawn]
   rule <k> join(T:Int); => . ...</k>
+       <thread>... <k> . </k> <id> T </id> ...</thread>
+  rule <k> wait(T:Int); => . ...</k>
        <thread>... <k> . </k> <id> T </id> ...</thread>
 
   rule <k> atomic S => !T:Int ...</k>
