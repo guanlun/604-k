@@ -1,0 +1,4 @@
+int x, t;
+t = spawn {x = 3;};
+atomic {x = 1; x = 2;};
+print(x);
