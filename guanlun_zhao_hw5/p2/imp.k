@@ -129,6 +129,10 @@ module IMP
        <jiang>... .Map => "Old" |-> Store ...</jiang>
        (.Bag => <thread>... <k> S ~> exit-atomic; </k> <env> Rho </env> <id> !T </id> ...</thread>)
 
+  rule <k> break-atomic; ~> _ => . </k>
+       <jiang>... "Old" |-> O ...</jiang>
+       <store> _ => O </store>
+
   rule <k> exit-atomic; => . ...</k>
        <store>... "Atomic" |-> (_ => -1) ...</store>
 
