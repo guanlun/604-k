@@ -26,16 +26,14 @@ module IMP-SYNTAX
                  | "print" "(" AExps ")" ";"
                  | "halt" ";"
                  > "join" AExp ";"            [strict]
-                 | "hold" ";"      [strict]
-                 > "break-atomic" ";"
-                 > "exit-atomic" ";"
-                 > "continue" ";"
+                 | "hold" ";"
+                 | "break-atomic" ";"
+                 | "atomic-end" ";"
 
   syntax Ids   ::= List{Id,","}
   syntax AExps ::= List{AExp,","}
   syntax Stmts ::= List{Stmt,""}
 endmodule
-
 
 module IMP
   imports IMP-SYNTAX
@@ -49,19 +47,31 @@ module IMP
                       <id color="black"> 0 </id>
                     </thread>
                   </threads>
+
+                  // Initialize Atomic to -1 to indicate there's no atomic thread
+                  // at the beginning
                   <store color="red"> .Map["Atomic" <- -1] </store>
-                  <jiang> .Map[0 <- -1] </jiang>
+
+                  // The main thread (with ID 0)
+                  <lookup> .Map[0 <- -1] </lookup>
                   <in color="magenta" stream="stdin"> .List </in>
                   <out color="Orchid" stream="stdout"> .List </out>
                 </T>
-// Atomic rules
+// Insert a "hold" statement before any program construct in all the threads when an atomic
+// thread is running.
   rule <thread>...
         <k> S => hold; ~> S ...</k>
         <id> T </id>
         ...
        </thread>
        <store>... "Atomic" |-> A ...</store>
-       <jiang>... T |-> (J => A) ...</jiang>
+       <lookup>... T |-> (J => A) ...</lookup>
+       // Here T is the ID of the current thread, A is the ID of the atomic thread and
+       // W is the ID of the thread the current thread is waiting for
+       // Conditions:
+       //   1. (A =/=Int -1)
+       //   2. (A =/=Int T): Current thread is not the atomic thread
+       //   3. (W =/=Int A) Current thread is not already waiting for that atomic thread
        requires (A =/=Int T) andBool (J =/=Int A) andBool (A =/=Int -1)
        
 // AExp
@@ -113,28 +123,40 @@ module IMP
         ...
        </thread>
        <store>... "Atomic" |-> A ...</store>
-       <jiang>... T |-> J ...</jiang>
-       requires (J =/=Int A)
+       <lookup>... T |-> J ...</lookup>
+       requires (A ==Int -1)
 
+  // When creating a new thread, insert an entry with the thread ID to the atomic lookup table.
+  // This later allows us to track which thread is waiting for the atomic operations to finish.
   rule <k> spawn S => !T:Int ...</k>
        <env> Rho </env>
-       <jiang>... .Map => !T |-> -1 ...</jiang>
+       <lookup>... .Map => !T |-> -1 ...</lookup>
        (.Bag => <thread>... <k> S </k> <env> Rho </env> <id> !T </id> ...</thread>) [spawn]
   rule <k> join(T:Int); => . ...</k>
        <thread>... <k> . </k> <id> T </id> ...</thread>
 
+  // Creating an atomic operation is similar to creating a new thread.
+  // First, mark the atomic thread ID flag with the ID of the atomic thread.
+  // Then, store the contents of the current "store" and save it to "BackupStore" in case
+  // we need to break the atomic action and restore the previous state.
+  // Also, insert an "atomic-end" statement at the end of the atomic action to restore the
+  // flags set here.
   rule <k> atomic S => !T:Int ...</k>
        <env> Rho </env>
        <store> Store => Store["Atomic" <- !T] </store>
-       <jiang>... .Map => "Old" |-> Store ...</jiang>
-       (.Bag => <thread>... <k> S ~> exit-atomic; </k> <env> Rho </env> <id> !T </id> ...</thread>)
+       <lookup> Lookup => Lookup["SavedStore" <- Store] </lookup>
+       (.Bag => <thread>... <k> S ~> atomic-end; </k> <env> Rho </env> <id> !T </id> ...</thread>) [atomic]
 
-  rule <k> break-atomic; ~> _ => . </k>
-       <jiang>... "Old" |-> O ...</jiang>
-       <store> _ => O </store>
-
-  rule <k> exit-atomic; => . ...</k>
+  // When ending the atomic operation, set the Atomic flag back to -1 to indicate no
+  // atomic operation is going on anymore.
+  rule <k> atomic-end; => . ...</k>
        <store>... "Atomic" |-> (_ => -1) ...</store>
+
+  // "break-atomic" should end the current atomic operation and restore the previous saved
+  // state.
+  rule <k> break-atomic; ~> _ => . </k>
+       <lookup>... "SavedStore" |-> O ...</lookup>
+       <store> _ => O </store>
 
 // Stmts
   rule .Stmts => .                 [structural]

@@ -4,8 +4,8 @@ module IMP-SYNTAX
   syntax AExp  ::= Int | String | Id
                  | "++" Id
                  | "read" "(" ")"
-                 > AExp "/" AExp              [left, strict, division]
-                 > AExp "+" AExp              [left, strict]
+                 > AExp "/" AExp              [left, strict, division, transition]
+                 > AExp "+" AExp              [left, strict, transition]
                  > "spawn" Block
                  > Id "=" AExp                [strict(2)]
                  | "(" AExp ")"               [bracket]
@@ -56,7 +56,7 @@ module IMP
        <store>... N |-> I ...</store>  [lookup]
   rule <k> ++X => I +Int 1 ...</k>
        <env>... X |-> N ...</env>
-       <store>... N |-> (I => I +Int 1) ...</store>  [increment]
+       <store>... N |-> (I => I +Int 1) ...</store>  [increment, transition]
   rule <k> read() => I ...</k>
        <in> ListItem(I:Int) => .List ...</in>  [read]
   rule I1 / I2 => I1 /Int I2  requires I2 =/=Int 0
@@ -75,15 +75,6 @@ module IMP
   rule <k> X = I:Int => I ...</k>
        <env>... X |-> N ...</env>
        <store>... N |-> (_ => I) ...</store>  [assignment]
-
-  rule <k> (X:Id, Xs:Ids => Xs) := (AE:AExp, AEs:AExps => AEs) ... </k>
-  // rule <k> (X:Id, Xs:Ids := AE:AExp, AEs:AExps) => Xs := AEs ... </k>
-       <env> Rho </env>
-       (.Bag => <thread>... <k> X = AE; </k> <env> Rho </env> <id> !T:Int </id> ...</thread>) [parrallel-assign]
-
-  rule <k> .Ids := .AExps => . </k>
-  rule <k> .AExps := .AExps => 0 ...</k>
-
   rule if (true)  S else _ => S
   rule if (false) _ else S => S
   rule while (B) S => if (B) {S while (B) S} else {.Stmts}  [structural]
@@ -93,14 +84,21 @@ module IMP
        <store>... .Map => !N |-> 0 ...</store>
   rule int .Ids; => .  [structural]
 
-  syntax Printable ::= Int | String
+  syntax Printable ::= Int | String [transition]
 /* currently it is necessary to subsort Printable to AExp,
   but future K should be able to infer that automatically. */
   syntax AExp ::= Printable
   context print(HOLE:AExp, AEs:AExps);
   rule <k> print(P:Printable,AEs => AEs); ...</k>
-       <out>... .List => ListItem(P) </out>  [print]
+       <out>... .List => ListItem(P) </out>  [print, transition]
   rule print(.AExps); => .  [structural]
+
+  rule <k> (X:Id, Xs:Ids => Xs) := (I:AExp, AEs:AExps => AEs) ...</k>
+       <env>... X |-> N ...</env>
+       <store>... N |-> (_ => I) ...</store> [transition]
+
+  rule <k> .Ids := .AExps => . </k>
+  rule <k> .AExps := .AExps => 0 ...</k>
 
   rule <k> halt; ~> _ => . </k>
 

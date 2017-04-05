@@ -1,0 +1,17 @@
+Please use the following command to compile:
+
+kompile --transition "transition increment lookup assignment division print" imp.k
+
+New syntax and rules are defined to support to parallel assignment feature.
+
+New syntax for AExp:
+Ids ":=" AExps
+AExps ":=" AExps
+
+New rules:
+rule <k> (X:Id, Xs:Ids => Xs) := (AE:AExp, AEs:AExps => AEs) ... </k>
+    <env>... X |-> N ...</env>
+    <store>... N |-> (_ => AE) ...</store> [transition]
+
+rule <k> .Ids := .AExps => . </k>
+rule <k> .AExps := .AExps => 0 ...</k>

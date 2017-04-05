@@ -1,0 +1,16 @@
+Please use the following command to compile:
+
+kompile --transition "atomic lookup spawn increment" imp.k
+
+Note that my version of atomic blocks includes a semicolon at the end of the block:
+
+atomic {
+    ...
+};
+
+However it would be trivial to change it.
+
+In my implementation, atomicity is achieved by setting the atomic flag. I've also created an
+"atomiclookup" cell to keep track of which thread is waiting for which atomic action to finish.
+
+Please find more documentation in the comments of imp.k.

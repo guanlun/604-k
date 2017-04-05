@@ -1,3 +1,11 @@
 int x;
-atomic {x = 1; break-atomic; x = 2;};
-print(x);
+x=0;
+int t1;
+
+t1 = spawn {
+    atomic {
+        x=1;
+    };
+};
+
+print(x,"\n");

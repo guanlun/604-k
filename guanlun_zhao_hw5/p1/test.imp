@@ -1,15 +1,6 @@
-int x, y, t, z;
-x = 0;
-y = 0;
-z = 3;
+int x,y,a,b;
+x = 1;
+y = 3;
 
-x, y := z+2, ++z;
+x, y := y, x;
 
-// after the parallel assignment we further modify variables to create
-// non-determinism
-z = z + 1;
-
-// print the results
-print("x : ", x, "\n");
-print("y : ", y, "\n");
-print("z : ", z, "\n");
