@@ -1,0 +1,9 @@
+try {
+    try { 
+        throw 7;
+    } catch(bool b) {
+        print(2);
+    }
+} catch(int x) {
+    print(3);
+}
