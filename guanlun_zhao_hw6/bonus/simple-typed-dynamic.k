@@ -98,7 +98,9 @@ constructs. */
                 | "if" "(" Exp ")" Block
                 | "while" "(" Exp ")" Block
             | "for" "(" Stmts Exp ";" Exp ")" Block
-                | "print" "(" Exps ")" ";"              [strict]
+                | "print" "(" Exps ")" ";"              //[strict]
+                | "fuckingprint" "(" Exps ")" ";"       [strict]
+                | "validate" Exp ";"
                 | "return" Exp ";"                      [strict]
                 | "return" ";"
                 | "try" Block "catch" "(" Param ")" Block
@@ -107,6 +109,7 @@ constructs. */
                 | "acquire" Exp ";"                     [strict]
                 | "release" Exp ";"                     [strict]
                 | "rendezvous" Exp ";"                  [strict]
+                | "halt" ";"
 
   syntax Stmts ::= Stmt
                  | Stmts Stmts                          [right]
@@ -206,7 +209,7 @@ to a location. */
   syntax KItem ::= undefined(Type)  [latex(\bot_{#1})]
 
   rule <k> secret X:Id; => . ...</k>
-       <secrecy>... .Map => X |-> 1 ...</secrecy>
+       <secrecy>... .Map => X |-> true ...</secrecy>
 
   rule <k> T:Type X:Id; => . ...</k>
        <env> Env => Env[X <- L] </env>
@@ -392,17 +395,40 @@ preserved: */
 
 We only allow printing integers and strings: */
 
+/*
   rule <k> print(V:Val, Es); => if (V in keys(Secrecy)) {print("shabi"); } else {print(Es);} ...</k>
        <out>... .List => ListItem(V) </out>
        <secrecy> Secrecy </secrecy>
        when typeOf(V) ==K int orBool typeOf(V) ==K string  [print]
+       */
 
 /*
-  rule <k> print(V:Val, Es => Es); ~> _ => print("shabi"); ...</k>
-       <secrecy>... SetItem(V) ...</secrecy>
-*/
+  rule <k> validate(V:Val); => . ...</k>        
+       <out>... .List => ListItem(V) </out>
+       <secrecy> S </secrecy>
+       requires notBool(V in keys(S))             [validate]
 
+  rule <k> validate(V:Val); ~> _ => . </k>  
+       <out>... .List => ListItem("DANGEROUS!\n") </out> 
+       <secrecy> S </secrecy> 
+       requires (V in keys(S))               [validate]
+      */
+
+  rule <k> print(V, Es); => if (V in keys(Secrecy)) { fuckingprint("nimas"); halt; } ~> fuckingprint(V, Es); ...</k>    
+       <secrecy> Secrecy </secrecy>
+
+  rule <k> fuckingprint(V:Val, Es => Es); ...</k> <out>... .List => ListItem(V) </out>
+    when typeOf(V) ==K int orBool typeOf(V) ==K string  [print]
+
+  rule fuckingprint(.Vals); => .  [structural]
+
+  rule <k> halt; ~> _ => . </k> [halt]
+
+  /*
+  rule <k> print(V:Val, Es => Es); ...</k> <out>... .List => ListItem(V) </out>
+    when typeOf(V) ==K int orBool typeOf(V) ==K string  [print]
   rule print(.Vals); => .  [structural]
+  */
 
 /*@ \subsubsection{Exceptions}
 

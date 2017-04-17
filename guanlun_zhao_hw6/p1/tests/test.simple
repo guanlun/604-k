@@ -1,20 +1,12 @@
+function f() {
+  print("Trying to break from within a function ...\n");
+  break;  // normally, this should not be allowed
+}
 
 function main() {
-  var i=0;
   while(true) {
-    print("i = ", ++i, "\n");
-    try {
-      if(i%2==0) {
-        var i=100;
-        continue;
-      } else {
-        throw i;
-      }
-    } catch(i) {
-      i=-i;
-      print(i,"\n");
-      if(i==-17) {break;}
-    }
+    f();
+    
   }
-  print("final i = ", i, "\n");
+  
 }
