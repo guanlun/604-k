@@ -227,8 +227,6 @@ derived ones before we start the semantics.  All desugaring macros below are
 straightforward. */
 
   rule if (E) S => if (E) S else {}                                 [macro]
-  rule for(Start Cond; Step) {S} => {Start while (Cond) {S Step;}}  [macro]
-  rule for(Start Cond; Step) {} => {Start while (Cond) {Step;}}     [macro]
   rule var E1:Exp, E2:Exp, Es:Exps; => var E1; var E2, Es;          [macro]
   rule var X:Id = E; => var X; X = E;                               [macro]
 
@@ -336,7 +334,7 @@ to the \K tool, as indicated by the \textit{\$PGM} variable, followed by the
                     //<br/> // TODO(KORE): support latex annotations #1799
                       <control color="cyan">
                         <fstack color="blue"> .List </fstack>
-                        <lstack color="red"> .List </lstack>
+                        <lstore color="red"> .Map["Step" <- 1] </lstore>
                         <xstack color="purple"> .List </xstack>
                       </control>
                     //<br/> // TODO(KORE): support latex annotations #1799
@@ -791,14 +789,36 @@ semantics, which would also involve the \textsf{control} cell. */
 
   syntax KItem ::= "popx"
 
-  rule  <k> (while (E) S  =>  if (E) {S while(E)S} )  ~> K </k>
-        <store> Store => Store["loop" <- K] ["Stmt" <- S] ["Pred" <- E]</store>  [structural]
+  rule <k> for(Start Cond; Step) {S} => {Start while (Cond) {S Step;}} ... </k>
+       <control>
+         <lstore> Store => Store["Step" <- Step] </lstore>
+         C
+       </control>
 
-  rule <k> break; ~> _ => K </k> 
-       <store> ... "loop" |-> K ...</store>
+  rule <k> for(Start Cond; Step) {} => {Start while (Cond) {Step;}} ... </k>
+       <control>
+         <lstore> Store => Store["Step" <- Step] </lstore>
+         C
+       </control>
 
-  rule <k> continue; ~> _ => while(E) S ~> K </k> 
-       <store> ... "loop" |-> K "Stmt" |-> S "Pred" |-> E ...</store>
+  rule <k> (while (E) S => if (E) {S while(E)S}) ~> K </k>
+       <control>
+         <lstore> Store => Store["Follow" <- K] ["Env" <- env(Env)] ["Stmt" <- S] ["Pred" <- E] </lstore>
+         C
+       </control>
+       <env> Env </env>
+
+  rule <k> break; ~> _ => env(Env) ~> K </k>
+       <control>
+         <lstore>... "Follow" |-> K "Env" |-> env(Env) ...</lstore>
+         C
+       </control>
+
+  rule <k> continue; ~> _ => env(Env) ~> Step; ~> while(E) S ~> K </k> 
+       <control>
+         <lstore>... "Follow" |-> K "Env" |-> env(Env) "Stmt" |-> S "Pred" |-> E "Step" |-> Step ...</lstore>
+         C
+       </control>
 
   rule <k> (try S1 catch(X) {S2} => S1 ~> popx) ~> K </k>
        <control>

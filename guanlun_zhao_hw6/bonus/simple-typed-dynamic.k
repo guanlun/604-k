@@ -392,9 +392,6 @@ preserved: */
 
 We only allow printing integers and strings: */
 
-  rule <k> print(I:Id, Es); if (I in keys(Secrecy)) {print("shabi");} ...</k>
-       <secrecy> Secrecy </secrecy>
-
   rule <k> print(V:Val, Es); => if (V in keys(Secrecy)) {print("shabi"); } else {print(Es);} ...</k>
        <out>... .List => ListItem(V) </out>
        <secrecy> Secrecy </secrecy>
