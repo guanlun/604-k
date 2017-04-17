@@ -1,0 +1,7 @@
+
+  int e = 100;
+  try {
+    throw x+2;
+  } catch(int e) {
+    print(e," ");   // should print 7
+  }

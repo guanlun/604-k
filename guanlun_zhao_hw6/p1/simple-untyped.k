@@ -181,7 +181,10 @@ arguments. */
                 | "if" "(" Exp ")" Block "else" Block   [avoid, strict(1)]
                 | "if" "(" Exp ")" Block
                 | "while" "(" Exp ")" Block
+                | "rwhile" "(" Exp ")" Block
                 | "for" "(" Stmts Exp ";" Exp ")" Block
+                | "break" ";"
+                | "continue" ";"
                 | "return" Exp ";"                      [strict]
                 | "return" ";"
                 | "print" "(" Exps ")" ";"              [strict]
@@ -333,6 +336,7 @@ to the \K tool, as indicated by the \textit{\$PGM} variable, followed by the
                     //<br/> // TODO(KORE): support latex annotations #1799
                       <control color="cyan">
                         <fstack color="blue"> .List </fstack>
+                        <lstack color="red"> .List </lstack>
                         <xstack color="purple"> .List </xstack>
                       </control>
                     //<br/> // TODO(KORE): support latex annotations #1799
@@ -783,7 +787,36 @@ below works because our while loops in SIMPLE are indeed very basic.  If we
 allowed break/continue of loops then we would need a completely different
 semantics, which would also involve the \textsf{control} cell. */
 
-  rule while (E) S => if (E) {S while(E)S}  [structural]
+  syntax KItem ::= (Id,Stmts,K,Map,ControlCellFragment)
+
+  syntax KItem ::= "popx"
+
+  rule  <k> (while (E) S  =>  if (E) {S while(E)S} )  ~> K </k>
+        <store> Store => Store["loop" <- K] ["Stmt" <- S] ["Pred" <- E]</store>  [structural]
+
+  rule <k> break; ~> _ => K </k> 
+       <store> ... "loop" |-> K ...</store>
+
+  rule <k> continue; ~> _ => while(E) S ~> K </k> 
+       <store> ... "loop" |-> K "Stmt" |-> S "Pred" |-> E ...</store>
+
+  rule <k> (try S1 catch(X) {S2} => S1 ~> popx) ~> K </k>
+       <control>
+         <xstack> .List => ListItem((X, S2, K, Env, C)) ...</xstack>
+         C
+       </control>
+       <env> Env </env>
+
+  rule <k> popx => . ...</k>
+       <xstack> ListItem(_) => .List ...</xstack>
+
+  rule <k> throw V:Val; ~> _ => { var X = V; S2 } ~> K </k>
+       <control>
+         <xstack> ListItem((X, S2, K, Env, C)) => .List ...</xstack>
+         (_ => C)
+       </control>
+       <env> _ => Env </env>
+
 
 /*@ \subsection{Print}
 The \texttt{print} statement was strict, so all its arguments are now
@@ -820,11 +853,7 @@ potential control structures are also properly modified when the exception
 is thrown to correctly recover the execution context.  This can be easily
 achieved by pushing/popping the entire current control context onto the
 exception stack.  The three rules below modularly do precisely the above. */
-
-  syntax KItem ::= (Id,Stmts,K,Map,ControlCellFragment)
-
-  syntax KItem ::= "popx"
-
+/*
   rule <k> (try S1 catch(X) {S2} => S1 ~> popx) ~> K </k>
        <control>
          <xstack> .List => ListItem((X, S2, K, Env, C)) ...</xstack>
@@ -841,7 +870,7 @@ exception stack.  The three rules below modularly do precisely the above. */
          (_ => C)
        </control>
        <env> _ => Env </env>
-
+*/
 /*@ The catch statement $S_2$ needs to be executed in the original environment,
 but where the thrown value $V$ is bound to the catch variable $X$.  We here
 chose to rely on two previously defined constructs when giving semantics to
