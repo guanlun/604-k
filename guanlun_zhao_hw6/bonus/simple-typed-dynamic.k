@@ -185,6 +185,7 @@ function body encounters an explicit \texttt{return} statement. */
                   <busy color="cyan">.Set</busy>
                   <terminated color="red"> .Set </terminated>
                   <secrecy> .Map </secrecy>
+                  <ongoing> false </ongoing>
                   <in color="magenta" stream="stdin"> .List </in>
                   <out color="brown" stream="stdout"> .List </out>
                   <nextLoc color="gray"> 0 </nextLoc>
@@ -274,6 +275,8 @@ When done with the first pass, call \texttt{main()}. */
 
   rule <k> X:Id => V ...</k>
        <env>... X |-> L ...</env>
+       <secrecy> Secrecy </secrecy>
+       <ongoing> _ => (X in keys(Secrecy)) </ongoing>
        <store>... L |-> V:Val ...</store>  [lookup]
 
 //@ \subsubsection{Variable/Array increment}
@@ -365,7 +368,7 @@ preserved: */
   context (HOLE => lvalue(HOLE)) = _
 
   rule <k> loc(L) = V:Val => V ...</k> <store>... L |-> (V' => V) ...</store>
-    when typeOf(V) ==K typeOf(V')  [assignment]
+    when typeOf(V) ==K typeOf(V') [assignment]
 
 //@ \subsection{Statements}
 
@@ -520,6 +523,7 @@ into a list of variable declarations. */
 //@ Location lookup.
 
   syntax Exp ::= lookup(Int)  // see NOTES.md for why Exp instead of KItem
+  
   rule <k> lookup(L) => V ...</k> <store>... L |-> V:Val ...</store>  [lookup]
 
 //@ Environment recovery.
@@ -534,7 +538,17 @@ into a list of variable declarations. */
   syntax Exp ::= lvalue(K)
   syntax Val ::= loc(Int)
 
-  rule <k> lvalue(X:Id => loc(L)) ...</k>  <env>... X |-> L:Int ...</env>
+  rule <k> lvalue(X:Id => loc(L)) ...</k>
+       <ongoing> IsOngoing => false </ongoing>
+       <secrecy> Secrecy => Secrecy[X <- true] </secrecy>
+       <env>... X |-> L:Int ...</env>
+       requires IsOngoing
+    [structural]
+
+  rule <k> lvalue(X:Id => loc(L)) ...</k>
+       <ongoing> IsOngoing </ongoing>
+       <env>... X |-> L:Int ...</env>
+       requires notBool(IsOngoing)
     [structural]
 
   //context lvalue(_[HOLE])

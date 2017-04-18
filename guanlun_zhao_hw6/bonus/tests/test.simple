@@ -1,6 +1,6 @@
 secret x;
+int x = 3;
+int y = x + 1;
+int z = 5;
 
-
- int x = 3;
-
- print(x);
+print(x);
