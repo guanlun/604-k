@@ -99,7 +99,7 @@ constructs. */
                 | "while" "(" Exp ")" Block
             | "for" "(" Stmts Exp ";" Exp ")" Block
                 | "print" "(" Exps ")" ";"              //[strict]
-                | "fuckingprint" "(" Exps ")" ";"       [strict]
+                | "realprint" "(" Exps ")" ";"       [strict]
                 | "validate" Exp ";"
                 | "return" Exp ";"                      [strict]
                 | "return" ";"
@@ -398,32 +398,13 @@ preserved: */
 
 We only allow printing integers and strings: */
 
-/*
-  rule <k> print(V:Val, Es); => if (V in keys(Secrecy)) {print("shabi"); } else {print(Es);} ...</k>
-       <out>... .List => ListItem(V) </out>
-       <secrecy> Secrecy </secrecy>
-       when typeOf(V) ==K int orBool typeOf(V) ==K string  [print]
-       */
-
-/*
-  rule <k> validate(V:Val); => . ...</k>        
-       <out>... .List => ListItem(V) </out>
-       <secrecy> S </secrecy>
-       requires notBool(V in keys(S))             [validate]
-
-  rule <k> validate(V:Val); ~> _ => . </k>  
-       <out>... .List => ListItem("DANGEROUS!\n") </out> 
-       <secrecy> S </secrecy> 
-       requires (V in keys(S))               [validate]
-      */
-
-  rule <k> print(V, Es); => if (V in keys(Secrecy)) { fuckingprint("nimas"); halt; } ~> fuckingprint(V, Es); ...</k>    
+  rule <k> print(V, Es); => if (V in keys(Secrecy)) { realprint("DANGEROUS!"); halt; } ~> realprint(V, Es); ...</k>    
        <secrecy> Secrecy </secrecy>
 
-  rule <k> fuckingprint(V:Val, Es => Es); ...</k> <out>... .List => ListItem(V) </out>
+  rule <k> realprint(V:Val, Es => Es); ...</k> <out>... .List => ListItem(V) </out>
     when typeOf(V) ==K int orBool typeOf(V) ==K string  [print]
 
-  rule fuckingprint(.Vals); => .  [structural]
+  rule realprint(.Vals); => .  [structural]
 
   rule <k> halt; ~> _ => . </k> [halt]
 
@@ -523,7 +504,6 @@ into a list of variable declarations. */
 //@ Location lookup.
 
   syntax Exp ::= lookup(Int)  // see NOTES.md for why Exp instead of KItem
-  
   rule <k> lookup(L) => V ...</k> <store>... L |-> V:Val ...</store>  [lookup]
 
 //@ Environment recovery.
@@ -543,13 +523,13 @@ into a list of variable declarations. */
        <secrecy> Secrecy => Secrecy[X <- true] </secrecy>
        <env>... X |-> L:Int ...</env>
        requires IsOngoing
-    [structural]
+       [structural]
 
   rule <k> lvalue(X:Id => loc(L)) ...</k>
        <ongoing> IsOngoing </ongoing>
        <env>... X |-> L:Int ...</env>
        requires notBool(IsOngoing)
-    [structural]
+       [structural]
 
   //context lvalue(_[HOLE])
   //context lvalue(HOLE[_])

@@ -182,6 +182,7 @@ arguments. */
                 | "if" "(" Exp ")" Block
                 | "while" "(" Exp ")" Block
                 | "rwhile" "(" Exp ")" Block
+                | "endloop" ";"
                 | "for" "(" Stmts Exp ";" Exp ")" Block
                 | "break" ";"
                 | "continue" ";"
@@ -334,6 +335,7 @@ to the \K tool, as indicated by the \textit{\$PGM} variable, followed by the
                     //<br/> // TODO(KORE): support latex annotations #1799
                       <control color="cyan">
                         <fstack color="blue"> .List </fstack>
+                        <lstack color="green"> .List </lstack>
                         <lstore color="red"> .Map["Step" <- 1] </lstore>
                         <xstack color="purple"> .List </xstack>
                       </control>
@@ -800,8 +802,22 @@ semantics, which would also involve the \textsf{control} cell. */
          <lstore> Store => Store["Step" <- Step] </lstore>
          C
        </control>
+  
+  rule <k> while (E) S => rwhile (E) S ~> endloop; ... </k>
+       <control>
+         <lstack> .List => ListItem(LStore) ...</lstack>
+         <lstore> LStore </lstore>
+         C
+       </control>
 
-  rule <k> (while (E) S => if (E) {S while(E)S}) ~> K </k>
+  rule <k> endloop; => . ... </k>
+       <control>
+         <lstack> ListItem(PrevStore) => .List ...</lstack>
+         <lstore> _ => PrevStore </lstore>
+         C
+       </control>
+
+  rule <k> (rwhile (E) S => if (E) {S rwhile(E)S}) ~> K </k>
        <control>
          <lstore> Store => Store["Follow" <- K] ["Env" <- env(Env)] ["Stmt" <- S] ["Pred" <- E] </lstore>
          C
@@ -814,29 +830,11 @@ semantics, which would also involve the \textsf{control} cell. */
          C
        </control>
 
-  rule <k> continue; ~> _ => env(Env) ~> Step; ~> while(E) S ~> K </k> 
+  rule <k> continue; ~> _ => env(Env) ~> Step; ~> rwhile(E) S ~> K </k> 
        <control>
          <lstore>... "Follow" |-> K "Env" |-> env(Env) "Stmt" |-> S "Pred" |-> E "Step" |-> Step ...</lstore>
          C
        </control>
-
-  rule <k> (try S1 catch(X) {S2} => S1 ~> popx) ~> K </k>
-       <control>
-         <xstack> .List => ListItem((X, S2, K, Env, C)) ...</xstack>
-         C
-       </control>
-       <env> Env </env>
-
-  rule <k> popx => . ...</k>
-       <xstack> ListItem(_) => .List ...</xstack>
-
-  rule <k> throw V:Val; ~> _ => { var X = V; S2 } ~> K </k>
-       <control>
-         <xstack> ListItem((X, S2, K, Env, C)) => .List ...</xstack>
-         (_ => C)
-       </control>
-       <env> _ => Env </env>
-
 
 /*@ \subsection{Print}
 The \texttt{print} statement was strict, so all its arguments are now
@@ -873,7 +871,7 @@ potential control structures are also properly modified when the exception
 is thrown to correctly recover the execution context.  This can be easily
 achieved by pushing/popping the entire current control context onto the
 exception stack.  The three rules below modularly do precisely the above. */
-/*
+
   rule <k> (try S1 catch(X) {S2} => S1 ~> popx) ~> K </k>
        <control>
          <xstack> .List => ListItem((X, S2, K, Env, C)) ...</xstack>
@@ -890,7 +888,7 @@ exception stack.  The three rules below modularly do precisely the above. */
          (_ => C)
        </control>
        <env> _ => Env </env>
-*/
+
 /*@ The catch statement $S_2$ needs to be executed in the original environment,
 but where the thrown value $V$ is bound to the catch variable $X$.  We here
 chose to rely on two previously defined constructs when giving semantics to

@@ -15,4 +15,3 @@ void main() {
   }
   print(e," as in the top declaration\n");  // should print 100
 }
-
