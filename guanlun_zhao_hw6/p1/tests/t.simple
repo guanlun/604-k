@@ -1,11 +1,7 @@
-
-var i=0, j = 0;
-while(i < 10) {
-    while (j < 10) {
-        ++j;
-        break;
-    }
-    ++i;
-    break;
+function f() {
+  break;  // normally, this should not be allowed
 }
-print(i,"\n");
+
+while (true) {
+    f();
+}

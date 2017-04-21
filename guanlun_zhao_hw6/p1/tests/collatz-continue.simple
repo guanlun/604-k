@@ -1,6 +1,5 @@
 function collatz(n) {
   var s=0;
-  print("Testing Collatz' conjecture for n = ",n," ... ");
   while (n > 1) {
     ++s;
     if (n == (n/2)*2) { n = n/2; continue;}
@@ -10,8 +9,7 @@ function collatz(n) {
 }
 
 function main() {
-  print("Testing Collatz' conjecture up to what number? ");
-  var m = read(), i=1;
+  var m = 10, i=1;
   for (var i=1; i<=m; ++i) { collatz(i); }
   print("Done.  It appears to hold.\n");
 }

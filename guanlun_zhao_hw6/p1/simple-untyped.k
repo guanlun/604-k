@@ -637,6 +637,7 @@ nulary \texttt{return;} statements. */
   rule <k> lambda(Xs,S)(Vs:Vals) ~> K => mkDecls(Xs,Vs) S return; </k>
        <control>
          <fstack> .List => ListItem((Env,K,C)) ...</fstack>
+         <lstore> _ => .Map["Step" <- 1] </lstore>
          C
        </control>
        <env> Env => GEnv </env>
