@@ -212,9 +212,15 @@ the expected type. */
        <profileFlag> OF => false </profileFlag>
        requires (OF)
 
-  syntax KItem ::= shabi(Set)
+  // syntax SetItems ::= SetItemSyntax | SetItems SetItems
 
-  rule <k> profile; => shabi(keys(O)) ... </k>
+  syntax KItem ::= shabi(Map)
+
+  rule <k> shabi(K |-> V M:Map) => print(Id2String(K) + ": " + Int2String(V) + "\n"); ~> shabi(M) ...</k>
+
+  rule <k> shabi(.Map) => . </k>
+
+  rule <k> profile; => shabi(O) ... </k>
        <objectCount> O </objectCount>
 
 /*@ \subsection{Unchanged semantics from dynamically typed SIMPLE}
