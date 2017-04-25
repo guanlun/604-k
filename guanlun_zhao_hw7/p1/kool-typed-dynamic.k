@@ -589,6 +589,7 @@ the only difference is the addition of the types. */
        <location> OL </location>
        <env> Env => Env[F <- L] </env>
        <store>... .Map => L|->methodClosure(getTypes(Ps)->T,C,OL,Ps,S) ...</store>
+       // <invocationCount>... .Map => (Id2String(C) +String "." +String Id2String(F)) |-> 0 </invocationCount>
        <nextLoc> L => L +Int 1 </nextLoc>
 
 
@@ -717,15 +718,13 @@ The method lookup is the same as in untyped KOOL.  */
     requires notBool(X in keys(Env))  [structural]
 
   context HOLE._::Id(_) requires HOLE =/=K super
+  rule <k> (objectClosure(C, EStack) . X => lookupMember(EStack, X:Id))(_:Exps) ...</k>
+       <invocationCount> IC => IC[Id2String(C) +String "." +String Id2String(X) <- 1] </invocationCount>
+       requires notBool(Id2String(C) +String "." +String Id2String(X) in keys(IC))
 
-  rule (objectClosure(_, EStack) . X
-    => lookupMember(EStack, X:Id))(_:Exps)  [structural]
-
-/*  rule <k> (super . X
-            => lookupMember(<envStack>EStack</envStack>,X))(_:Exps)...</k>
-       <crntClass> Class </crntClass>
-       <envStack>... ListItem((Class,_)) EStack </envStack>
-    [structural]*/
+  rule <k> (objectClosure(C, EStack) . X => lookupMember(EStack, X:Id))(_:Exps) ...</k>
+       <invocationCount>... (Id2String(C) +String "." +String Id2String(X)) |-> (IC => IC +Int 1) ...</invocationCount>
+       
   rule <k> (super . X
             => lookupMember(EStack,X))(_:Exps)...</k>
        <crntClass> Class:Id </crntClass>
@@ -784,16 +783,12 @@ Like in untyped KOOL. */
 
   context lvalue((HOLE . _)<:Exp)
 
-/*  rule lvalue(objectClosure(<crntObj> <crntClass> C </crntClass>
-                            <envStack>... ListItem((C,EnvC:EnvCell)) EStack </envStack> </crntObj>)
-              . X
-              => lookupMember(<envStack> ListItem((C,EnvC)) EStack </envStack>,
-                              X))  [structural]*/
   rule lvalue(objectClosure(C:Id,
                             ListItem(envStackFrame(C,Env)) EStack)
               . X
               => lookupMember(ListItem(envStackFrame(C,Env)) EStack,
                               X))  [structural]
+                              
   rule lvalue(objectClosure(C,
                             (ListItem(envStackFrame(C',_)) => .List) EStack)
               . X)
