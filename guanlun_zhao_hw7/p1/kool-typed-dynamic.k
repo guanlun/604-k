@@ -212,16 +212,21 @@ the expected type. */
        <profileFlag> OF => false </profileFlag>
        requires (OF)
 
-  // syntax SetItems ::= SetItemSyntax | SetItems SetItems
+  syntax KItem ::= printObjectCount(Map)
+                | printInvocationCount(Map)
+                | printInvocationItem(K,Val)
 
-  syntax KItem ::= shabi(Map)
+  rule <k> printObjectCount(K |-> V M:Map) => print(Id2String(K) + ": " + Int2String(V) + "\n"); ~> printObjectCount(M) ...</k>
+  rule <k> printObjectCount(.Map) => . ...</k>
 
-  rule <k> shabi(K |-> V M:Map) => print(Id2String(K) + ": " + Int2String(V) + "\n"); ~> shabi(M) ...</k>
+  rule <k> printInvocationCount(K |-> V M:Map) => printInvocationItem(K,V) ~> printInvocationCount(M) ...</k>
+  rule <k> printInvocationCount(.Map) => . ...</k>
 
-  rule <k> shabi(.Map) => . </k>
+  rule <k> printInvocationItem(K,V) => print(Int2String(V) +String "\n"); ...</k>
 
-  rule <k> profile; => shabi(O) ... </k>
-       <objectCount> O </objectCount>
+  rule <k> profile; => printObjectCount(OC) ~> printInvocationCount(IC) ... </k>
+       <objectCount> OC </objectCount>
+       <invocationCount> IC </invocationCount>
 
 /*@ \subsection{Unchanged semantics from dynamically typed SIMPLE}
 
@@ -677,11 +682,6 @@ Like in untyped KOOL. */
 
   context HOLE . _::Id requires (HOLE =/=K super)
 
-/*  rule objectClosure(<crntObj> <crntClass> Class:Id </crntClass>
-                     <envStack>... ListItem((Class,EnvC:EnvCell)) EStack </envStack> </crntObj>)
-       . X:Id
-    => lookupMember(<envStack> ListItem((Class,EnvC)) EStack </envStack>, X)
-    [structural]*/
   rule objectClosure(Class:Id,
                      ListItem(envStackFrame(Class,Env)) EStack)
        . X:Id
@@ -692,10 +692,6 @@ Like in untyped KOOL. */
        . X:Id
     requires Class =/=K Class' [structural]
 
-/*  rule <k> super . X => lookupMember(<envStack>EStack</envStack>, X) ...</k>
-       <crntClass> Class </crntClass>
-       <envStack>... ListItem((Class,EnvC:EnvCell)) EStack </envStack>
-    [structural]*/
   rule <k> super . X => lookupMember(EStack, X) ...</k>
        <crntClass> Class:Id </crntClass>
        <envStack> ListItem(envStackFrame(Class,_)) EStack </envStack>
@@ -718,11 +714,16 @@ The method lookup is the same as in untyped KOOL.  */
     requires notBool(X in keys(Env))  [structural]
 
   context HOLE._::Id(_) requires HOLE =/=K super
-  rule <k> (objectClosure(C, EStack) . X => lookupMember(EStack, X:Id))(_:Exps) ...</k>
-       <invocationCount> IC => IC[Id2String(C) +String "." +String Id2String(X) <- 1] </invocationCount>
+  //rule <k> (objectClosure(C, EStack) . X)(Es:Exps) => print(Id2String(C) +String "." +String Id2String(X) +String "\n"); ~> (lookupMember(EStack, X:Id))(Es:Exps) ...</k>
+  //     <invocationCount> IC => IC[Id2String(C) +String "." +String Id2String(X) <- 1] </invocationCount>
+  //     requires notBool(Id2String(C) +String "." +String Id2String(X) in keys(IC))
+
+
+rule <k> (objectClosure(C, EStack) . X => lookupMember(EStack, X:Id))(Es:Exps) ...</k>
+       <invocationCount> IC => IC[lookupMember(EStack, X:Id) <- 1] </invocationCount>
        requires notBool(Id2String(C) +String "." +String Id2String(X) in keys(IC))
 
-  rule <k> (objectClosure(C, EStack) . X => lookupMember(EStack, X:Id))(_:Exps) ...</k>
+  rule <k> (objectClosure(C, EStack) . X)(Es:Exps) => print(Id2String(C) +String "." +String Id2String(X) +String "\n"); ~> (lookupMember(EStack, X:Id))(Es:Exps) ...</k>
        <invocationCount>... (Id2String(C) +String "." +String Id2String(X)) |-> (IC => IC +Int 1) ...</invocationCount>
        
   rule <k> (super . X

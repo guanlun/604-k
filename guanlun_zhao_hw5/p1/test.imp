@@ -1,6 +1,9 @@
-int x,y,a,b;
+int x, y;
 x = 1;
-y = 3;
-
-x, y := y, x;
-
+y = 2;
+print("x : ", x, "\n");
+print("y : ", y, "\n");
+print("after swap\n");
+x , y  := y, x;
+print("x : ", x, "\n");
+print("y : ", y, "\n");
