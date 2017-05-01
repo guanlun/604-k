@@ -192,6 +192,7 @@ the expected type. */
                   <store color="white"> .Map </store>
                   <objectCount> .Map </objectCount>
                   <invocationCount> .Map </invocationCount>
+                  <invocationSummary> .Map </invocationSummary>
                   <profileFlag> true </profileFlag>
                   <busy color="cyan">.Set </busy>
                   <terminated color="red"> .Set </terminated>
@@ -215,6 +216,7 @@ the expected type. */
   syntax KItem ::= printObjectCount(Map)
                 | printInvocationCount(Map)
                 | printInvocationItem(K,Val)
+                
 
   rule <k> printObjectCount(K |-> V M:Map) => print(Id2String(K) + ": " + Int2String(V) + "\n"); ~> printObjectCount(M) ...</k>
   rule <k> printObjectCount(.Map) => . ...</k>
@@ -222,9 +224,44 @@ the expected type. */
   rule <k> printInvocationCount(K |-> V M:Map) => printInvocationItem(K,V) ~> printInvocationCount(M) ...</k>
   rule <k> printInvocationCount(.Map) => . ...</k>
 
-  rule <k> printInvocationItem(K,V) => print(Int2String(V) +String "\n"); ...</k>
+/*
+  rule <k> (objectClosure(C, EStack) . X)(Es:Exps) => print(Id2String(C) +String "." +String Id2String(X) +String "\n"); ~> (lookupMember(EStack, X:Id))(Es:Exps) ...</k>
+       <invocationCount> IC => IC[Id2String(C) +String "." +String Id2String(X) <- 1] </invocationCount>
+       requires notBool(Id2String(C) +String "." +String Id2String(X) in keys(IC))
 
-  rule <k> profile; => printObjectCount(OC) ~> printInvocationCount(IC) ... </k>
+  rule <k> (objectClosure(C, EStack) . X)(Es:Exps) => print(Id2String(C) +String "." +String Id2String(X) +String "\n"); ~> (lookupMember(EStack, X:Id))(Es:Exps) ...</k>
+       <invocationCount>... (Id2String(C) +String "." +String Id2String(X)) |-> (IC => IC +Int 1) ...</invocationCount>
+       */
+
+/*
+  rule <k> printInvocationItem(lookup(L).X,V) =>
+           print(
+             Id2String(C) +String
+             "." +String
+             Id2String(X) +String
+             " |-> " +String
+             Int2String(V) +String
+             "\n");
+       ...</k>
+       <store>... L |-> methodClosure(T,C,OL,Ps,S) ...</store>
+       <invocationSummary> </invocationSummary>
+       */
+
+  rule <k> printInvocationItem(lookup(L).X,V) => . ...</k>
+       <store>... L |-> methodClosure(T,C,OL,Ps,S) ...</store>
+       <invocationSummary> IS => IS[Id2String(C) +String "." +String Id2String(X) <- V] </invocationSummary>
+       requires notBool(Id2String(C) +String "." +String Id2String(X) in keys(IS))
+
+  rule <k> printInvocationItem(lookup(L).X,V) => . ...</k>
+       <store>... L |-> methodClosure(T,C,OL,Ps,S) ...</store>
+       <invocationSummary>... (Id2String(C) +String "." +String Id2String(X)) |-> (IS => IS +Int V) ...</invocationSummary>
+
+  rule <k> profile; => 
+           print("Objects created:\n"); ~> 
+           printObjectCount(OC) ~> 
+           print("Methods invoked:\n"); ~>
+           printInvocationCount(IC)
+       ...</k>
        <objectCount> OC </objectCount>
        <invocationCount> IC </invocationCount>
 
@@ -660,7 +697,6 @@ those in untyped KOOL. */
        </crntObj>
        <store>... .Map => L |-> objectClosure(Class, EStack) ...</store>
 
-
 /*@ \subsubsection{Self reference}
 
 Like in untyped KOOL. */
@@ -714,17 +750,13 @@ The method lookup is the same as in untyped KOOL.  */
     requires notBool(X in keys(Env))  [structural]
 
   context HOLE._::Id(_) requires HOLE =/=K super
-  //rule <k> (objectClosure(C, EStack) . X)(Es:Exps) => print(Id2String(C) +String "." +String Id2String(X) +String "\n"); ~> (lookupMember(EStack, X:Id))(Es:Exps) ...</k>
-  //     <invocationCount> IC => IC[Id2String(C) +String "." +String Id2String(X) <- 1] </invocationCount>
-  //     requires notBool(Id2String(C) +String "." +String Id2String(X) in keys(IC))
 
+  rule <k> (objectClosure(C, EStack) . X => lookupMember(EStack, X:Id))(Es:Exps) ...</k>
+       <invocationCount> IC => IC[lookupMember(EStack, X:Id).X <- 1] </invocationCount>
+       requires notBool(lookupMember(EStack, X:Id).X in keys(IC))
 
-rule <k> (objectClosure(C, EStack) . X => lookupMember(EStack, X:Id))(Es:Exps) ...</k>
-       <invocationCount> IC => IC[lookupMember(EStack, X:Id) <- 1] </invocationCount>
-       requires notBool(Id2String(C) +String "." +String Id2String(X) in keys(IC))
-
-  rule <k> (objectClosure(C, EStack) . X)(Es:Exps) => print(Id2String(C) +String "." +String Id2String(X) +String "\n"); ~> (lookupMember(EStack, X:Id))(Es:Exps) ...</k>
-       <invocationCount>... (Id2String(C) +String "." +String Id2String(X)) |-> (IC => IC +Int 1) ...</invocationCount>
+  rule <k> (objectClosure(C, EStack) . X => lookupMember(EStack, X:Id))(Es:Exps) ...</k>
+       <invocationCount>... lookupMember(EStack, X:Id).X |-> (IC => IC +Int 1) ...</invocationCount>
        
   rule <k> (super . X
             => lookupMember(EStack,X))(_:Exps)...</k>

@@ -1,0 +1,59 @@
+<T>
+  <threads> .ThreadCellBag </threads>
+  <store> 
+0 |-> objectClosure ( Main , ListItem ( envStackFrame ( Main , Main |-> 1 ) ) ListItem ( envStackFrame ( Object , .Map ) ) ) 
+
+1 |-> methodClosure ( ( void , .Types ) -> void , Main , 0 , .Exps , { ( C1 ( o1 , .Exps ) ; ( ( o1 = new C1 ( .Exps ) ) ; ) ) ( C2 ( o2 , .Exps ) ; ( ( o2 = new C2 ( .Exps ) ) ; ) ) print ( o1 . m1 ( .Exps ) , ( " " , ( o1 . m2 ( .Exps ) , ( " " , ( o2 . m1 ( .Exps ) , ( " " , ( o2 . m2 ( .Exps ) , ( "\n" , .Exps ) ) ) ) ) ) ) ) ; } ) 
+
+2 |-> objectClosure ( C1 , ListItem ( envStackFrame ( C1 , m2 |-> 6 m1 |-> 5 C1 |-> 4 ) ) ListItem ( envStackFrame ( Object , .Map ) ) ) 
+
+3 |-> objectClosure ( C1 , ListItem ( envStackFrame ( C1 , m2 |-> 6 m1 |-> 5 C1 |-> 4 ) ) ListItem ( envStackFrame ( Object , .Map ) ) ) 
+
+4 |-> methodClosure ( ( void , .Types ) -> void , C1 , 3 , .Exps , { } ) 
+
+5 |-> methodClosure ( ( void , .Types ) -> int , C1 , 3 , .Exps , { return 1 ; } ) 
+
+6 |-> methodClosure ( ( void , .Types ) -> int , C1 , 3 , .Exps , { return m1 ( .Exps ) ; } ) 
+
+7 |-> objectClosure ( C2 , ListItem ( envStackFrame ( C2 , C2 |-> 12 m1 |-> 13 ) ) ListItem ( envStackFrame ( C1 , m2 |-> 11 m1 |-> 10 C1 |-> 9 ) ) ListItem ( envStackFrame ( Object , .Map ) ) ) 
+
+8 |-> objectClosure ( C2 , ListItem ( envStackFrame ( C2 , C2 |-> 12 m1 |-> 13 ) ) ListItem ( envStackFrame ( C1 , m2 |-> 11 m1 |-> 10 C1 |-> 9 ) ) ListItem ( envStackFrame ( Object , .Map ) ) ) 
+
+9 |-> methodClosure ( ( void , .Types ) -> void , C1 , 8 , .Exps , { } ) 
+
+10 |-> methodClosure ( ( void , .Types ) -> int , C1 , 8 , .Exps , { return 1 ; } ) 
+
+11 |-> methodClosure ( ( void , .Types ) -> int , C1 , 8 , .Exps , { return m1 ( .Exps ) ; } ) 
+
+12 |-> methodClosure ( ( void , .Types ) -> void , C2 , 8 , .Exps , { } ) 
+
+13 |-> methodClosure ( ( void , .Types ) -> int , C2 , 8 , .Exps , { return 2 ; } ) </store>
+
+  <objectCount> C2 |-> 1 Main |-> 1 C1 |-> 1 </objectCount>
+  <invocationCount> lookup ( 13 ) |-> 1 lookup ( 11 ) |-> 1 lookup ( 12 ) |-> 1 lookup ( 5 ) |-> 1 lookup ( 6 ) |-> 1 lookup ( 1 ) |-> 1 lookup ( 4 ) |-> 1 </invocationCount>
+  <profileFlag> false </profileFlag>
+  <busy> .Set </busy>
+  <terminated> SetItem ( 0 ) </terminated>
+  <in> ListItem ( #buffer ( "" ) ) ListItem ( "on" ) ListItem ( #istream ( 0 ) ) </in>
+  <out> ListItem ( #ostream ( 1 ) ) ListItem ( "on" ) ListItem ( #buffer ( "" ) ) </out>
+  <nextLoc> 14 </nextLoc>
+  <classes>
+    <class>
+      <className> Main </className>
+      <extends> Object </extends>
+      <declarations> void Main ( .Exps ) { ( C1 ( o1 , .Exps ) ; ( ( o1 = new C1 ( .Exps ) ) ; ) ) ( C2 ( o2 , .Exps ) ; ( ( o2 = new C2 ( .Exps ) ) ; ) ) print ( o1 . m1 ( .Exps ) , ( " " , ( o1 . m2 ( .Exps ) , ( " " , ( o2 . m1 ( .Exps ) , ( " " , ( o2 . m2 ( .Exps ) , ( "\n" , .Exps ) ) ) ) ) ) ) ) ; } </declarations>
+    </class>
+    <class>
+      <className> C2 </className>
+      <extends> C1 </extends>
+      <declarations> ( void C2 ( .Exps ) { } ) ( int m1 ( .Exps ) { return 2 ; } ) </declarations>
+    </class>
+    <class>
+      <className> C1 </className>
+      <extends> Object </extends>
+      <declarations> ( void C1 ( .Exps ) { } ) ( int m1 ( .Exps ) { return 1 ; } ) ( int m2 ( .Exps ) { return m1 ( .Exps ) ; } ) </declarations>
+    </class>
+  </classes>
+</T>
+
+
