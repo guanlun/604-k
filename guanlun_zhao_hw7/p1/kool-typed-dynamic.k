@@ -218,7 +218,7 @@ the expected type. */
                 | summarizeInvocationItem(K,Val)
                 | "dumpInvocationCount" ";"
 
-  rule <k> printObjectCount(K |-> V M:Map) => print("  " +String Id2String(K) + ": " + Int2String(V) + "\n"); ~> printObjectCount(M) ...</k>
+  rule <k> printObjectCount(K |-> V M:Map) => print("   " +String Id2String(K) + " |-> " + Int2String(V) + "\n"); ~> printObjectCount(M) ...</k>
   rule <k> printObjectCount(.Map) => . ...</k>
 
   rule <k> summarizeInvocationCount(K |-> V M:Map) => summarizeInvocationItem(K,V) ~> summarizeInvocationCount(M) ...</k>
@@ -233,18 +233,20 @@ the expected type. */
        <store>... L |-> methodClosure(T,C,OL,Ps,S) ...</store>
        <invocationSummary>... (Id2String(C) +String "." +String Id2String(X)) |-> (IS => IS +Int V) ...</invocationSummary>
 
-  rule <k> printInvocationCount(K |-> V M:Map) => print("  " +String K + ": " + Int2String(V) + "\n"); ~> printInvocationCount(M) ...</k>
+  rule <k> printInvocationCount(K |-> V M:Map) => print("   " +String K + " |-> " + Int2String(V) + "\n"); ~> printInvocationCount(M) ...</k>
   rule <k> printInvocationCount(.Map) => . ...</k>
 
   rule <k> dumpInvocationCount; => printInvocationCount(IS) ...</k>
        <invocationSummary> IS </invocationSummary>
 
   rule <k> profile; => 
+           print("\n==========\nStatistics\n==========\n\n"); ~>
            summarizeInvocationCount(IC) ~>
            print("Objects created:\n"); ~> 
-           printObjectCount(OC) ~> 
-           print("Methods invoked:\n"); ~>
-           dumpInvocationCount;
+           printObjectCount(OC) ~>
+           print("\nMethods invoked:\n"); ~>
+           dumpInvocationCount; ~>
+           print("\n");
        ...</k>
        <objectCount> OC </objectCount>
        <invocationCount> IC </invocationCount>
@@ -600,7 +602,7 @@ Like in untyped KOOL. */
                             <declarations> S </declarations>
                         </class>)
        ...</classes>
-       <objectCount>... .Map => Class1 |-> 0 ...</objectCount>  [structural]
+       [structural]
 
 
 /*@ \subsubsection{Method declaration}
@@ -631,6 +633,24 @@ those in untyped KOOL. */
 
   syntax KItem ::= envStackFrame(Id, Map)
 
+  rule <k> new Class:Id(Vs:Vals) ~> K
+           => create(Class) ~> (storeObj ~> ((Class(Vs)); return this;)) </k>
+       <env> Env => .Map </env>
+       <nextLoc> L:Int => L +Int 1 </nextLoc>
+     //<br/> // TODO(KORE): support latex annotations #1799
+       <control>
+         <xstack> XS </xstack>
+         <crntObj> Obj
+                   => <crntClass> Object </crntClass>
+                      <envStack> ListItem(envStackFrame(Object, .Map)) </envStack>
+                      <location> L </location>
+         </crntObj>
+         <return> T => Class </return>
+         <fstack> .List => ListItem(fstackFrame(Env, K, XS, T, <crntObj>Obj</crntObj>)) ...</fstack>
+       </control>
+       <objectCount> OC => OC[Class <- 1] </objectCount>
+       requires notBool(Class in keys(OC))
+       
   rule <k> new Class:Id(Vs:Vals) ~> K
            => create(Class) ~> (storeObj ~> ((Class(Vs)); return this;)) </k>
        <env> Env => .Map </env>
