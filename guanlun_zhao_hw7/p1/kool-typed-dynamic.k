@@ -214,53 +214,37 @@ the expected type. */
        requires (OF)
 
   syntax KItem ::= printObjectCount(Map)
-                | printInvocationCount(Map)
-                | printInvocationItem(K,Val)
-                
+                | summarizeInvocationCount(Map)
+                | summarizeInvocationItem(K,Val)
+                | "dumpInvocationCount" ";"
 
-  rule <k> printObjectCount(K |-> V M:Map) => print(Id2String(K) + ": " + Int2String(V) + "\n"); ~> printObjectCount(M) ...</k>
+  rule <k> printObjectCount(K |-> V M:Map) => print("  " +String Id2String(K) + ": " + Int2String(V) + "\n"); ~> printObjectCount(M) ...</k>
   rule <k> printObjectCount(.Map) => . ...</k>
 
-  rule <k> printInvocationCount(K |-> V M:Map) => printInvocationItem(K,V) ~> printInvocationCount(M) ...</k>
-  rule <k> printInvocationCount(.Map) => . ...</k>
+  rule <k> summarizeInvocationCount(K |-> V M:Map) => summarizeInvocationItem(K,V) ~> summarizeInvocationCount(M) ...</k>
+  rule <k> summarizeInvocationCount(.Map) => . ...</k>
 
-/*
-  rule <k> (objectClosure(C, EStack) . X)(Es:Exps) => print(Id2String(C) +String "." +String Id2String(X) +String "\n"); ~> (lookupMember(EStack, X:Id))(Es:Exps) ...</k>
-       <invocationCount> IC => IC[Id2String(C) +String "." +String Id2String(X) <- 1] </invocationCount>
-       requires notBool(Id2String(C) +String "." +String Id2String(X) in keys(IC))
-
-  rule <k> (objectClosure(C, EStack) . X)(Es:Exps) => print(Id2String(C) +String "." +String Id2String(X) +String "\n"); ~> (lookupMember(EStack, X:Id))(Es:Exps) ...</k>
-       <invocationCount>... (Id2String(C) +String "." +String Id2String(X)) |-> (IC => IC +Int 1) ...</invocationCount>
-       */
-
-/*
-  rule <k> printInvocationItem(lookup(L).X,V) =>
-           print(
-             Id2String(C) +String
-             "." +String
-             Id2String(X) +String
-             " |-> " +String
-             Int2String(V) +String
-             "\n");
-       ...</k>
-       <store>... L |-> methodClosure(T,C,OL,Ps,S) ...</store>
-       <invocationSummary> </invocationSummary>
-       */
-
-  rule <k> printInvocationItem(lookup(L).X,V) => . ...</k>
+  rule <k> summarizeInvocationItem(lookup(L).X,V) => . ...</k>
        <store>... L |-> methodClosure(T,C,OL,Ps,S) ...</store>
        <invocationSummary> IS => IS[Id2String(C) +String "." +String Id2String(X) <- V] </invocationSummary>
        requires notBool(Id2String(C) +String "." +String Id2String(X) in keys(IS))
 
-  rule <k> printInvocationItem(lookup(L).X,V) => . ...</k>
+  rule <k> summarizeInvocationItem(lookup(L).X,V) => . ...</k>
        <store>... L |-> methodClosure(T,C,OL,Ps,S) ...</store>
        <invocationSummary>... (Id2String(C) +String "." +String Id2String(X)) |-> (IS => IS +Int V) ...</invocationSummary>
 
+  rule <k> printInvocationCount(K |-> V M:Map) => print("  " +String K + ": " + Int2String(V) + "\n"); ~> printInvocationCount(M) ...</k>
+  rule <k> printInvocationCount(.Map) => . ...</k>
+
+  rule <k> dumpInvocationCount; => printInvocationCount(IS) ...</k>
+       <invocationSummary> IS </invocationSummary>
+
   rule <k> profile; => 
+           summarizeInvocationCount(IC) ~>
            print("Objects created:\n"); ~> 
            printObjectCount(OC) ~> 
            print("Methods invoked:\n"); ~>
-           printInvocationCount(IC)
+           dumpInvocationCount;
        ...</k>
        <objectCount> OC </objectCount>
        <invocationCount> IC </invocationCount>
@@ -762,7 +746,17 @@ The method lookup is the same as in untyped KOOL.  */
             => lookupMember(EStack,X))(_:Exps)...</k>
        <crntClass> Class:Id </crntClass>
        <envStack> ListItem(envStackFrame(Class,_)) EStack </envStack>
+       <invocationCount> IC => IC[lookupMember(EStack,X).X <- 1] </invocationCount>
+       requires notBool(lookupMember(EStack,X).X in keys(IC))
     [structural]
+
+  rule <k> (super . X
+            => lookupMember(EStack,X))(_:Exps)...</k>
+       <crntClass> Class:Id </crntClass>
+       <envStack> ListItem(envStackFrame(Class,_)) EStack </envStack>
+       <invocationCount>... lookupMember(EStack,X).X |-> (IC => IC +Int 1) ... </invocationCount>
+    [structural]
+
   rule <k> (super . X)(_:Exps)...</k>
        <crntClass> Class:Id </crntClass>
        <envStack> (ListItem(envStackFrame(Class':Id,_)) => .List) EStack </envStack>
